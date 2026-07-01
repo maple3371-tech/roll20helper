@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roll20 명령어 도우미</title>
+<style>
+  :root{
+    --bg:#fafafa; --paper:#ffffff; --ink:#1a1a1a; --ink-soft:#6b6b6b; --ink-faint:#a3a3a3;
+    --line:#ececec; --line-2:#e0e0e0; --pink:#ff5c8a; --pink-soft:#ffe4ec;
+    --ok:#2fa36b; --radius:16px; --radius-sm:10px;
+    --mono:"JetBrains Mono",ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+    --round:"Quicksand","Baloo 2",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --sans:"Pretendard","Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
+    line-height:1.55; padding:34px 18px 140px; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:880px; margin:0 auto; }
+
+  .topbar{ display:flex; align-items:center; gap:14px; margin-bottom:24px; flex-wrap:wrap; }
+  .topbar h1{ font-family:var(--round); font-weight:700; font-size:clamp(24px,4vw,32px);
+    letter-spacing:-.01em; margin:0; }
+  .topbar .spacer{ flex:1; }
+  .topbar .save-state{ font-family:var(--mono); font-size:11px; color:var(--ink-faint); }
+  .topbar .save-state.saved{ color:var(--ok); }
+
+  button.btn{ font-family:var(--round); font-size:13px; font-weight:600; padding:8px 16px;
+    border-radius:10px; border:1.5px solid var(--line-2); background:var(--paper); color:var(--ink);
+    cursor:pointer; transition:all .14s; }
+  button.btn:hover{ border-color:var(--ink); }
+  button.btn.primary{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+  button.btn.primary:hover{ background:#000; }
+  button.btn.copied{ border-color:var(--ok); color:var(--ok); background:#eafaf1; }
+  button.btn.ghost{ background:transparent; }
+  button.btn.small{ padding:6px 12px; font-size:12px; }
+
+  .projects .plist{ display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+  .pcard{ background:var(--paper); border:1.5px solid var(--line-2); border-radius:var(--radius);
+    padding:18px 20px; display:flex; align-items:center; gap:14px; cursor:pointer; transition:.14s; }
+  .pcard:hover{ border-color:var(--ink); box-shadow:0 8px 24px rgba(0,0,0,.05); }
+  .pcard .pinfo{ flex:1; min-width:0; }
+  .pcard .pname{ font-family:var(--round); font-weight:700; font-size:17px; margin-bottom:3px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pcard .pmeta{ font-family:var(--mono); font-size:11px; color:var(--ink-faint); }
+  .pcard .pdel{ background:var(--bg); border:1.5px solid var(--line-2); color:var(--ink-faint);
+    width:32px; height:32px; border-radius:9px; cursor:pointer; transition:.12s; flex:none;
+    display:flex; align-items:center; justify-content:center; }
+  .pcard .pdel:hover{ border-color:var(--pink); color:var(--pink); background:var(--pink-soft); }
+  .new-project{ width:100%; margin-top:14px; font-family:var(--round); font-size:15px; font-weight:600;
+    padding:16px; border-radius:var(--radius); border:1.5px dashed var(--line-2); background:var(--paper);
+    color:var(--ink-soft); cursor:pointer; transition:.14s; }
+  .new-project:hover{ border-color:var(--ink); color:var(--ink); border-style:solid; }
+  .empty-note{ text-align:center; color:var(--ink-faint); font-size:14px; padding:30px 0 6px; }
+
+  .toolbar{ position:sticky; top:14px; z-index:50; background:var(--paper);
+    border:1.5px solid var(--line-2); border-radius:var(--radius); padding:14px 16px;
+    margin-bottom:24px; box-shadow:0 6px 24px rgba(0,0,0,.04); }
+  .toolbar .glabel{ font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-faint); margin-bottom:10px; display:block; }
+  .toolbar .row{ display:flex; flex-wrap:wrap; gap:7px; align-items:center; }
+  .cmd-pick{ font-family:var(--round); font-size:13px; font-weight:600; padding:8px 14px;
+    border-radius:999px; border:1.5px solid var(--line-2); background:var(--paper); color:var(--ink);
+    cursor:pointer; transition:all .14s; white-space:nowrap; }
+  .cmd-pick:hover{ border-color:var(--ink); transform:translateY(-1px); }
+
+  #blocks{ display:flex; flex-direction:column; gap:16px; }
+  .block{ background:var(--paper); border:1.5px solid var(--line-2); border-radius:var(--radius);
+    padding:18px; transition:border-color .14s, box-shadow .14s; }
+  .block.sel{ border-color:var(--ink); box-shadow:0 8px 30px rgba(0,0,0,.06); }
+  .block-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .block-num{ font-family:var(--mono); font-size:12px; color:var(--paper); background:var(--ink);
+    width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:600; }
+  .block-title{ font-family:var(--round); font-size:15px; font-weight:700; color:var(--ink-soft); }
+  .block-head .spacer{ flex:1; }
+  .block-head .icon-btn{ background:var(--bg); border:1.5px solid var(--line-2); color:var(--ink-soft);
+    cursor:pointer; width:30px; height:30px; border-radius:9px; font-size:14px; transition:.12s;
+    display:flex; align-items:center; justify-content:center; line-height:1; }
+  .block-head .icon-btn:hover{ border-color:var(--ink); color:var(--ink); }
+  .block-head .icon-btn.del:hover{ border-color:var(--pink); color:var(--pink); background:var(--pink-soft); }
+
+  /* /desc toggle : 블랙&화이트 */
+  .desc-toggle{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; user-select:none;
+    font-family:var(--mono); font-size:11px; color:var(--ink-faint); font-weight:600; }
+  .desc-toggle input{ position:absolute; opacity:0; width:0; height:0; }
+  .desc-toggle .t{ width:32px; height:18px; background:var(--line-2); border-radius:999px;
+    position:relative; transition:.16s; flex:none; }
+  .desc-toggle .t::after{ content:""; position:absolute; top:2px; left:2px; width:14px; height:14px;
+    background:var(--paper); border-radius:50%; transition:.16s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+  .desc-toggle input:checked + .t{ background:var(--ink); }
+  .desc-toggle input:checked + .t::after{ transform:translateX(14px); }
+  .desc-toggle.on{ color:var(--ink); }
+
+  .segments{ display:flex; flex-direction:column; gap:10px; }
+  .segment{ border:1.5px dashed var(--line-2); border-radius:var(--radius-sm); padding:12px;
+    background:var(--bg); position:relative; }
+  .segment.cmd{ border-style:solid; background:var(--paper); }
+  .seg-head{ display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+  .seg-type{ font-family:var(--round); font-weight:700; font-size:12px; padding:4px 10px;
+    border-radius:999px; background:var(--ink); color:var(--paper); }
+  .seg-type.plain{ background:var(--line-2); color:var(--ink-soft); }
+  .seg-head .spacer{ flex:1; }
+  .space-toggle{ display:inline-flex; align-items:center; gap:5px; cursor:pointer; user-select:none;
+    font-family:var(--mono); font-size:10px; color:var(--ink-faint); font-weight:600; }
+  .space-toggle input{ position:absolute; opacity:0; width:0; height:0; }
+  .space-toggle .st{ width:26px; height:15px; background:var(--line-2); border-radius:999px;
+    position:relative; transition:.16s; flex:none; }
+  .space-toggle .st::after{ content:""; position:absolute; top:1.5px; left:1.5px; width:12px; height:12px;
+    background:var(--paper); border-radius:50%; transition:.16s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .space-toggle input:checked + .st{ background:var(--ink); }
+  .space-toggle input:checked + .st::after{ transform:translateX(11px); }
+  .seg-copy{ background:var(--paper); border:1.5px solid var(--line-2); color:var(--ink-soft);
+    font-family:var(--round); font-weight:600; font-size:10.5px; padding:4px 9px; border-radius:999px;
+    cursor:pointer; transition:.12s; white-space:nowrap; }
+  .seg-copy:hover{ border-color:var(--ink); color:var(--ink); }
+  .seg-copy.copied{ border-color:var(--ok); color:var(--ok); background:#eafaf1; }
+  .seg-head .seg-x{ background:none; border:none; color:var(--ink-faint); cursor:pointer;
+    font-size:14px; padding:2px 6px; border-radius:6px; transition:.12s; }
+  .seg-head .seg-x:hover{ color:var(--pink); background:var(--pink-soft); }
+
+  .field label{ display:block; font-family:var(--mono); font-size:10px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-faint); margin-bottom:5px; font-weight:600; }
+  .field + .field{ margin-top:9px; }
+  textarea, input.txt{ width:100%; background:var(--paper); border:1.5px solid var(--line-2);
+    border-radius:9px; color:var(--ink); font-family:var(--sans); font-size:14px; padding:9px 11px;
+    resize:vertical; transition:border-color .12s; }
+  textarea:focus, input.txt:focus{ outline:none; border-color:var(--ink); }
+  textarea{ min-height:48px; line-height:1.5; }
+
+  .colorrow{ display:flex; flex-wrap:wrap; gap:16px; margin-top:9px; }
+  .colorctl{ display:flex; flex-direction:column; gap:6px; }
+  .colorctl > .clabel{ font-family:var(--mono); font-size:10px; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--ink-faint); font-weight:600; }
+  .swatches{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+  .swatch{ width:22px; height:22px; border-radius:6px; border:2px solid var(--paper); cursor:pointer;
+    padding:0; transition:transform .1s; box-shadow:0 0 0 1.5px var(--line-2); }
+  .swatch:hover{ transform:scale(1.18); }
+  .swatch.active{ box-shadow:0 0 0 2px var(--ink); }
+  .sw-div{ width:1.5px; height:18px; background:var(--line-2); margin:0 3px; border-radius:2px; }
+  .recent-label{ font-family:var(--mono); font-size:9px; color:var(--ink-faint); margin-right:2px; }
+  .recent-slot{ width:22px; height:22px; border-radius:6px; border:2px dashed var(--line-2);
+    background:var(--paper); box-shadow:none; }
+  .colorpick{ display:flex; align-items:center; gap:6px; }
+  .colorpick .pick-wrap{ position:relative; width:26px; height:26px; }
+  .colorpick input[type=color]{ position:absolute; inset:0; width:100%; height:100%; padding:0;
+    border:none; background:none; cursor:pointer; opacity:0; }
+  .colorpick .pick-face{ width:26px; height:26px; border-radius:7px; border:1.5px solid var(--line-2);
+    display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--ink-soft);
+    pointer-events:none; background:
+      conic-gradient(from 0deg, #ff5c5c, #ffd94d, #6fe36f, #4dc9ff, #b96bff, #ff5c5c); }
+  .colorpick input.hex{ width:90px; font-family:var(--mono); font-size:12px; padding:6px 8px; }
+
+  .seg-add{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:11px;
+    padding-top:11px; border-top:1.5px dashed var(--line); }
+  .seg-add .lbl{ font-family:var(--mono); font-size:10px; color:var(--ink-faint); letter-spacing:.06em;
+    text-transform:uppercase; margin-right:2px; font-weight:600; }
+  .seg-add button{ font-family:var(--round); font-size:11.5px; font-weight:600; padding:5px 11px;
+    border-radius:999px; border:1.5px solid var(--line-2); background:var(--paper); color:var(--ink-soft);
+    cursor:pointer; transition:.12s; }
+  .seg-add button:hover{ border-color:var(--ink); color:var(--ink); }
+
+  .out{ margin-top:14px; }
+  .out .olabel{ font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-faint); margin-bottom:6px; display:block; font-weight:600; }
+  .code-out{ background:#f6f6f6; border:1.5px solid var(--line-2); border-radius:10px; padding:11px 12px;
+    font-family:var(--mono); font-size:12px; line-height:1.55; color:#333; white-space:pre-wrap;
+    word-break:break-all; min-height:18px; }
+  .acts{ display:flex; gap:8px; margin-top:11px; flex-wrap:wrap; }
+
+  .preview{ margin-top:11px; background:var(--paper); border:1.5px solid var(--line-2);
+    border-radius:10px; padding:16px; display:none; }
+  .preview.show{ display:block; }
+
+  .addbar{ display:flex; justify-content:center; margin-top:24px; }
+  .add-block{ font-family:var(--round); font-size:14px; font-weight:600; padding:12px 26px;
+    border-radius:999px; border:1.5px dashed var(--line-2); background:var(--paper); color:var(--ink-soft);
+    cursor:pointer; transition:.14s; }
+  .add-block:hover{ border-color:var(--ink); color:var(--ink); border-style:solid; }
+  .footer-acts{ display:flex; justify-content:center; gap:10px; margin-top:28px; flex-wrap:wrap; }
+  .hidden{ display:none !important; }
+
+  /* find bar */
+  .findbar{ display:flex; gap:8px; align-items:center; margin-bottom:16px; }
+  .findbar input{ flex:1; background:var(--paper); border:1.5px solid var(--line-2); border-radius:10px;
+    color:var(--ink); font-family:var(--sans); font-size:14px; padding:9px 12px; transition:border-color .12s; }
+  .findbar input:focus{ outline:none; border-color:var(--ink); }
+  .findbar .findcount{ font-family:var(--mono); font-size:11px; color:var(--ink-faint); min-width:56px; text-align:center; }
+  .block.hit{ border-color:var(--pink) !important; box-shadow:0 0 0 3px var(--pink-soft) !important; }
+
+  /* block collapsed */
+  .icon-btn.fold{ font-size:12px; }
+  .block.collapsed .segments,
+  .block.collapsed .seg-add,
+  .block.collapsed .out{ display:none; }
+  .block.collapsed{ padding-bottom:14px; }
+  .block-head .block-preview-mini{ font-family:var(--sans); font-size:12px; color:var(--ink-faint);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:280px; display:none; }
+  .block.collapsed .block-preview-mini{ display:inline-block; }
+
+  /* divider block (구간 나누기) */
+  .divblock{ display:flex; align-items:center; gap:12px; padding:4px 6px; }
+  .divblock .dline{ flex:1; height:2px; background:repeating-linear-gradient(90deg,var(--line-2) 0 8px, transparent 8px 14px); border-radius:2px; }
+  .divblock input.dlabel{ background:transparent; border:none; text-align:center; font-family:var(--round);
+    font-weight:700; font-size:13px; color:var(--ink-soft); width:auto; min-width:80px; max-width:240px; padding:4px 8px; }
+  .divblock input.dlabel:focus{ outline:none; }
+  .divblock .div-x{ background:var(--bg); border:1.5px solid var(--line-2); color:var(--ink-faint);
+    width:28px; height:28px; border-radius:8px; cursor:pointer; transition:.12s; flex:none;
+    display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .divblock .div-x:hover{ border-color:var(--pink); color:var(--pink); }
+  .divblock .div-move{ display:flex; gap:4px; }
+  .divblock .div-move button{ background:var(--bg); border:1.5px solid var(--line-2); color:var(--ink-faint);
+    width:26px; height:26px; border-radius:7px; cursor:pointer; font-size:12px; }
+  .divblock .div-move button:hover{ border-color:var(--ink); color:var(--ink); }
+
+  /* range copy modal-ish inline */
+  .rangebar{ display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap;
+    background:var(--paper); border:1.5px solid var(--line-2); border-radius:12px; padding:10px 14px; margin-top:14px; }
+  .rangebar span{ font-family:var(--mono); font-size:11px; color:var(--ink-faint); }
+  .rangebar select{ font-family:var(--sans); font-size:13px; padding:6px 10px; border-radius:8px;
+    border:1.5px solid var(--line-2); background:var(--paper); color:var(--ink); }
+
+  /* floating scroll buttons */
+  .scroll-fab{ position:fixed; right:20px; bottom:24px; display:flex; flex-direction:column; gap:8px; z-index:60; }
+  .scroll-fab button{ width:44px; height:44px; border-radius:50%; border:1.5px solid var(--line-2);
+    background:rgba(255,255,255,.55); backdrop-filter:blur(6px); color:var(--ink); font-size:18px;
+    cursor:pointer; transition:.14s; box-shadow:0 4px 14px rgba(0,0,0,.08); }
+  .scroll-fab button:hover{ background:rgba(255,255,255,.9); border-color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1>Roll20 명령어 도우미</h1>
+    <span class="spacer"></span>
+    <span class="save-state" id="saveState"></span>
+    <button class="btn ghost small hidden" id="backBtn">← 프로젝트 목록</button>
+    <button class="btn primary small hidden" id="saveBtn">저장</button>
+  </div>
+
+  <div class="projects" id="projectView">
+    <div class="plist" id="projectList"></div>
+    <div class="empty-note hidden" id="emptyNote">아직 프로젝트가 없습니다. 새 프로젝트를 만들어 주세요.</div>
+    <button class="new-project" id="newProject">＋ 새 프로젝트 만들기</button>
+  </div>
+
+  <div class="editor hidden" id="editorView">
+    <div class="findbar">
+      <input type="text" id="findInput" placeholder="🔎 텍스트로 블록 찾기 (Enter로 다음)">
+      <span class="findcount" id="findCount"></span>
+    </div>
+    <div class="toolbar">
+      <span class="glabel">새 블록 만들기 · 명령어 선택</span>
+      <div class="row" id="cmdRow"></div>
+    </div>
+    <div id="blocks"></div>
+    <div class="addbar">
+      <button class="add-block" id="addBlock">＋ 빈 블록 추가</button>
+      <button class="add-block" id="addDivider" style="margin-left:8px;">┈ 구간 나누기</button>
+    </div>
+    <div class="rangebar">
+      <span>구간 복사</span>
+      <select id="rangeFrom"></select>
+      <span>~</span>
+      <select id="rangeTo"></select>
+      <button class="btn small primary" id="rangeCopy">복사</button>
+    </div>
+    <div class="footer-acts"><button class="btn primary" id="copyAll">전체 명령어 한 번에 복사</button></div>
+  </div>
+</div>
+
+<div class="scroll-fab hidden" id="scrollFab">
+  <button id="scrollTop" title="맨 위로">↑</button>
+  <button id="scrollBottom" title="맨 아래로">↓</button>
+</div>
+
+<script>
+/* ================= 저장소 ================= */
+const STORE_KEY="roll20helper.projects.v1";
+const LAST_KEY="roll20helper.lastProject.v1";
+const RECENT_KEY="roll20helper.recentColors.v1";
+let storageOK=true;
+function loadStore(){ try{const r=localStorage.getItem(STORE_KEY);return r?JSON.parse(r):{};}catch(e){storageOK=false;return{};} }
+function saveStore(d){ try{localStorage.setItem(STORE_KEY,JSON.stringify(d));return true;}catch(e){storageOK=false;return false;} }
+let PROJECTS=loadStore();
+
+/* 최근 색 (전역 공유, F5 유지) */
+let RECENT_COLORS=[];
+try{ const r=localStorage.getItem(RECENT_KEY); if(r)RECENT_COLORS=JSON.parse(r); }catch(e){}
+const recentSubscribers=[];
+function pushRecentColor(color){
+  if(!/^#[0-9a-fA-F]{6}$/.test(color))return;
+  color=color.toLowerCase();
+  RECENT_COLORS=RECENT_COLORS.filter(c=>c.toLowerCase()!==color);
+  RECENT_COLORS.unshift(color);
+  RECENT_COLORS=RECENT_COLORS.slice(0,4);
+  try{ localStorage.setItem(RECENT_KEY,JSON.stringify(RECENT_COLORS)); }catch(e){}
+  recentSubscribers.forEach(fn=>fn());
+}
+
+/* ================= 명령어 정의 ================= */
+function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const PALETTE=["#ffffff","#B9062F","#EE1B60","#FFD444","#4C7A34","#2E6F8E","#9900ff","#333333"];
+
+const COMMANDS={
+  plain:{ label:"텍스트", fields:[{key:"text",label:"내용",type:"area",placeholder:"그냥 지문 텍스트"}], colors:[],
+    build:(v)=>({ code:`${v.text||""}`, preview:`<span>${esc(v.text)}</span>` }) },
+  divider:{ label:"가름선", fields:[], colors:[{key:"line",label:"선 색",default:"#333333"},{key:"star",label:"별 색",default:"#EE1B60"}],
+    build:(v,c)=>{const l=c.line||"#333333",s=c.star||"#EE1B60";return{
+      code:`[───────](#" style="text-decoration:none; font-style: normal; color:${l};) [✷](#" style="font-style: normal; text-decoration:none; color: ${s};) [───────](#" style="text-decoration:none; font-style: normal; color:${l};)`,
+      preview:`<span style="color:${l};">───────</span> <span style="color:${s};">✷</span> <span style="color:${l};">───────</span>`};} },
+  check:{ label:"판정", fields:[{key:"skill",label:"기능",placeholder:"예: 이성, 지능"}],
+    colors:[{key:"fg",label:"글씨색",default:"#ffffff"},{key:"c1",label:"그라데이션 앞",default:"#FF0053"},{key:"c2",label:"그라데이션 뒤",default:"#FFD444"}],
+    build:(v,c)=>{const s=v.skill||"",fg=c.fg||"#ffffff",c1=c.c1||"#FF0053",c2=c.c2||"#FFD444";return{
+      code:`[✷　?{${s}|} 판정　✷](#" style=" text-decoration: none; font-style: normal !important; text-align: center; display: inline-block; color: ${fg}; letter-spacing: -1px; border-radius: 20px; padding: 5px 25px;margin-left: -4px;background-image: linear-gradient(135deg, ${c1}, ${c2} &#41;)`,
+      preview:`<span style="display:inline-block; color:${fg}; letter-spacing:-1px; border-radius:20px; padding:5px 25px; background-image:linear-gradient(135deg,${c1},${c2});">✷　${esc(s)} 판정　✷</span>`};} },
+  chapter:{ label:"챕터", fields:[{key:"num",label:"챕터 번호",placeholder:"00",default:"00"},{key:"name",label:"챕터명",placeholder:"챕터 제목"}],
+    colors:[{key:"fg",label:"글씨색",default:"#FFD444"},{key:"bg",label:"배경색",default:"#EE1B60"}],
+    build:(v,c)=>{const num=v.num||"00",name=v.name||"",fg=c.fg||"#FFD444",bg=c.bg||"#EE1B60";return{
+      code:`[─────── CHAPTER ${num} ───────](#" style="text-decoration:none; color: ${fg}; background-color:${bg}; text-align:center; display:block; padding:2px; box-shadow: 0px 8px 0px 15px ${bg}; font-size:12px; font-style: normal;)[${name}](#" style="text-decoration:none; color: white; background-color:${bg}; text-align:center; display:block; padding:2px; box-shadow: 0px 8px 0px 15px ${bg}; font-style: normal;)`,
+      preview:`<div style="color:${fg}; background:${bg}; text-align:center; padding:2px; font-size:12px;">─────── CHAPTER ${esc(num)} ───────</div><div style="color:white; background:${bg}; text-align:center; padding:2px 2px 10px;">${esc(name)}</div>`};} },
+  textcolor:{ label:"글씨색 변경", fields:[{key:"text",label:"텍스트",type:"area",placeholder:"색을 바꿀 부분"}],
+    colors:[{key:"fg",label:"글씨색",default:"#B9062F"}],
+    build:(v,c)=>{const t=v.text||"",fg=c.fg||"#B9062F";return{
+      code:`[${t}](#" style="text-decoration:none; font-weight:bold; color:${fg};)`,
+      preview:`<span style="font-weight:bold; color:${fg};">${esc(t)}</span>`};} },
+  bgEmphasis:{ label:"배경 강조", fields:[{key:"text",label:"텍스트",type:"area",placeholder:"강조할 문장"}],
+    colors:[{key:"fg",label:"글씨색",default:"#ffffff"},{key:"bg",label:"배경색",default:"#B9062F"}],
+    build:(v,c)=>{const t=v.text||"",fg=c.fg||"#ffffff",bg=c.bg||"#B9062F";const style=`text-decoration:none; color: ${fg}; background-color:${bg};  text-align:center; display:block; padding:4px; line-height:1.3;`;return{
+      code:`[${t}](#" style="${style})`, preview:`<div style="${style} border-radius:3px;">${esc(t)}</div>`};} },
+  thought:{ label:"생각 말풍선", fields:[{key:"text",label:"내용",type:"area",placeholder:"속으로 하는 생각"}],
+    colors:[{key:"fg",label:"글씨색",default:"#000000"}],
+    build:(v,c)=>{const t=v.text||"",fg=c.fg||"#000000";return{
+      code:`[●](#" style="color:white; font-size:10px; text-shadow:1px 1px 1px #97A9B9; text-decoration:none;)[●](#" style="color:white; font-size:15px; text-shadow:1px 1px 1px #97A9B9; text-decoration:none;) [?{${t}}](#" style="text-decoration:none; color:${fg}; background:white; border-radius:20px; line-height:1.3; padding:6.5px; display: inline-block; box-shadow: 1px 1px 1px #97A9B9;)`,
+      preview:`<span style="color:white; font-size:10px; text-shadow:1px 1px 1px #97A9B9;">●</span><span style="color:white; font-size:15px; text-shadow:1px 1px 1px #97A9B9;">●</span> <span style="color:${fg}; background:white; border-radius:20px; line-height:1.3; padding:6.5px; display:inline-block; box-shadow:1px 1px 1px #97A9B9;">${esc(t)}</span>`};} },
+  speech:{ label:"말풍선", fields:[{key:"text",label:"내용",type:"area",placeholder:"할 말"}],
+    colors:[{key:"fg",label:"글씨색",default:"#000000"}],
+    build:(v,c)=>{const t=v.text||"",fg=c.fg||"#000000";return{
+      code:`[${t}](#" style="position: relative; background: #ffffff; color:${fg}; border-radius: .4em; padding:6px; user-select:none; display:block; line-height:1.5; text-decoration:none;) [ ](#" style="content: ''; position: absolute; border: 12px solid transparent; border-right-color: #ffffff; border-left: 0; border-bottom: 0; margin-top: -25px; margin-left: -10px; line-height:1.3; text-decoration:none;)`,
+      preview:`<span style="position:relative; background:#ffffff; border:1px solid #eee; border-radius:.4em; padding:6px; display:inline-block; line-height:1.5; color:${fg};">${esc(t)}</span>`};} },
+  memo:{ label:"메모", fields:[{key:"text",label:"내용",type:"area",placeholder:"메모 내용"}],
+    colors:[{key:"line",label:"선 색",default:"#9900ff"},{key:"fg",label:"글씨색",default:"#333333"}],
+    build:(v,c)=>{const t=v.text||"",line=c.line||"#9900ff",fg=c.fg||"#333333";return{
+      code:`[${t}](#" style="background: #F9F7F6; border-left: 7px solid ${line}; color:${fg}; font-size:13px; padding: 3px; text-decoration:none;)`,
+      preview:`<span style="background:#F9F7F6; border-left:7px solid ${line}; color:${fg}; font-size:13px; padding:3px; display:inline-block;">${esc(t)}</span>`};} },
+  bgm:{ label:"브금", fields:[{key:"title",label:"BGM 제목 (10자 이하)",placeholder:"곡 제목"},{key:"url",label:"BGM 링크",placeholder:"https://..."}], colors:[],
+    build:(v)=>{const title=v.title||"",url=v.url||"";return{
+      code:`[💿　　?{${title}|10자 이하}　　▶ ■](${url?url:"?{URL|BGM 링크}"} #" style="margin: 0px 7px 7px 7px; font-size:15px; color: black; background: white; text-align: center; display: inline-block; padding: 5px 15px; font-style: normal !important; font-weight: normal !important; border-radius: 20px; margin-left: 4px; text-decoration: none; border: 1px dashed black; box-shadow: 2px 2px 0 black; letter-spacing: -1px;)`,
+      preview:`<span style="font-size:15px; color:black; background:white; display:inline-block; padding:5px 15px; border-radius:20px; border:1px dashed black; box-shadow:2px 2px 0 black; letter-spacing:-1px;">💿　　${esc(title)}　　▶ ■</span>`};} },
+  handout:{ label:"핸드아웃", fields:[{key:"name",label:"핸드아웃 명",placeholder:"제목"},{key:"text",label:"내용",type:"area",placeholder:"핸드아웃 내용"}],
+    colors:[{key:"fg",label:"글씨색",default:"#a9a9a9"},{key:"line",label:"테두리 색",default:"#a9a9a9"},{key:"bg",label:"안쪽 배경",default:"#ffffff"}],
+    build:(v,c)=>{const name=v.name||"",t=v.text||"",fg=c.fg||"#a9a9a9",line=c.line||"#a9a9a9",bg=c.bg||"#ffffff";return{
+      code:`[**🔎 ${name} │　** ${t}](#" style="text-decoration:none; color: ${fg}; font-weight: bold; padding: 8px 12px; margin: 5px 5px 7px 5px; background: ${bg}; line-height: 150%; border: 2px solid ${line}; box-shadow: -4px 4px 0px ${line}; display: inline-block;)`,
+      preview:`<span style="color:${fg}; font-weight:bold; padding:8px 12px; background:${bg}; line-height:150%; border:2px solid ${line}; box-shadow:-4px 4px 0px ${line}; display:inline-block;"><b>🔎 ${esc(name)} │　</b> ${esc(t)}</span>`};} },
+  blur:{ label:"블러", fields:[{key:"text",label:"내용",type:"area",placeholder:"가릴 내용"}], colors:[],
+    build:(v)=>{const t=v.text||"";return{
+      code:`[${t}](#" style="text-decoration: none; color:rgba(0,0,0,0&rpar;; text-shadow:5px 0px 10px black,-5px 0px 10px black; font-size:11px;)`,
+      preview:`<span style="color:rgba(0,0,0,0); text-shadow:5px 0px 10px black,-5px 0px 10px black; font-size:11px;">${esc(t)}</span>`};} },
+};
+const TOOLBAR_ORDER=["divider","check","chapter","textcolor","bgEmphasis","thought","speech","memo","bgm","handout","blur"];
+const INLINE_ORDER=["plain","textcolor","memo","blur"];
+
+/* ================= 뷰 요소 ================= */
+const projectView=document.getElementById("projectView");
+const editorView=document.getElementById("editorView");
+const projectList=document.getElementById("projectList");
+const emptyNote=document.getElementById("emptyNote");
+const backBtn=document.getElementById("backBtn");
+const saveBtn=document.getElementById("saveBtn");
+const saveState=document.getElementById("saveState");
+const blocksWrap=document.getElementById("blocks");
+const cmdRow=document.getElementById("cmdRow");
+let currentProjectId=null, blocks=[], selectedBlock=null;
+
+/* ================= 프로젝트 목록 ================= */
+function renderProjectList(){
+  projectList.innerHTML="";
+  const ids=Object.keys(PROJECTS).sort((a,b)=>(PROJECTS[b].updated||0)-(PROJECTS[a].updated||0));
+  emptyNote.classList.toggle("hidden", ids.length>0);
+  ids.forEach(id=>{
+    const p=PROJECTS[id];
+    const card=document.createElement("div"); card.className="pcard";
+    const d=p.updated?new Date(p.updated):null;
+    const meta=(p.blocks?p.blocks.length:0)+"개 블록"+(d?" · "+d.toLocaleString("ko-KR",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):"");
+    card.innerHTML=`<div class="pinfo"><div class="pname"></div><div class="pmeta">${meta}</div></div><button class="pdel" title="삭제">✕</button>`;
+    card.querySelector(".pname").textContent=p.name||"제목 없음";
+    card.addEventListener("click",e=>{ if(e.target.closest(".pdel"))return; openProject(id); });
+    card.querySelector(".pdel").addEventListener("click",()=>{ if(confirm(`"${p.name}" 프로젝트를 삭제하시겠습니까?`)){ delete PROJECTS[id]; saveStore(PROJECTS); renderProjectList(); } });
+    projectList.appendChild(card);
+  });
+}
+document.getElementById("newProject").addEventListener("click",()=>{
+  const name=prompt("새 프로젝트 이름을 입력해 주세요.","무제 시나리오"); if(name===null)return;
+  const id="p"+Date.now(); PROJECTS[id]={ id, name:name||"무제 시나리오", updated:Date.now(), blocks:[] };
+  saveStore(PROJECTS); openProject(id);
+});
+backBtn.addEventListener("click",()=>{ commitToProject(); goHome(); });
+function goHome(){ currentProjectId=null; try{localStorage.removeItem(LAST_KEY);}catch(e){}
+  editorView.classList.add("hidden"); projectView.classList.remove("hidden");
+  document.getElementById("scrollFab").classList.add("hidden");
+  backBtn.classList.add("hidden"); saveBtn.classList.add("hidden"); saveState.textContent=""; renderProjectList(); }
+function openProject(id){ currentProjectId=id; try{localStorage.setItem(LAST_KEY,id);}catch(e){}
+  projectView.classList.add("hidden"); editorView.classList.remove("hidden");
+  backBtn.classList.remove("hidden"); saveBtn.classList.remove("hidden");
+  loadBlocksFromProject(PROJECTS[id]); flagSaved(true); }
+
+/* ================= 저장 ================= */
+let dirtyTimer=null;
+function markDirty(){ flagSaved(false); clearTimeout(dirtyTimer); dirtyTimer=setTimeout(()=>commitToProject(),700); }
+function flagSaved(saved){ if(!storageOK){ saveState.textContent="⚠ 이 환경에서는 저장이 되지 않을 수 있습니다"; saveState.classList.remove("saved"); return; }
+  saveState.textContent=saved?"저장됨 ✓":"저장 중…"; saveState.classList.toggle("saved",saved); }
+function commitToProject(){ if(!currentProjectId)return; const p=PROJECTS[currentProjectId]; if(!p)return;
+  p.blocks=blocks.map(serializeBlock); p.updated=Date.now(); flagSaved(saveStore(PROJECTS)); }
+saveBtn.addEventListener("click",()=>commitToProject());
+function serializeBlock(state){
+  if(state.isDivider) return { isDivider:true, label: state.el.querySelector(".dlabel").value };
+  return { descOn:state.descOn, collapsed:state.collapsed, segs:state.segs.map(seg=>({
+  cmd:seg.cmd, space:seg.space,
+  values:(()=>{const o={}; for(const k in seg.fieldEls)o[k]=seg.fieldEls[k].value; return o;})(),
+  colors:(()=>{const o={}; seg.colorCtls.forEach(c=>o[c.key]=c.value); return o;})()
+})) }; }
+
+/* ================= 툴바 ================= */
+TOOLBAR_ORDER.forEach(key=>{ const b=document.createElement("button"); b.className="cmd-pick"; b.textContent=COMMANDS[key].label;
+  b.addEventListener("click",()=>focusBlock(addBlock({firstCmd:key}))); cmdRow.appendChild(b); });
+
+/* ================= 색상 컨트롤 (기본색 + 최근색 + 피커) ================= */
+function makeColorCtl(colorDef,onChange,initVal){
+  const start=initVal||colorDef.default;
+  const wrap=document.createElement("div"); wrap.className="colorctl";
+  wrap.innerHTML=`<span class="clabel">${colorDef.label}</span>
+    <div class="swatches"></div>
+    <div class="colorpick">
+      <span class="pick-wrap"><span class="pick-face">＋</span><input type="color" value="${start}"></span>
+      <input type="text" class="hex txt" value="${start}" maxlength="7">
+    </div>`;
+  const sw=wrap.querySelector(".swatches"),pick=wrap.querySelector("input[type=color]"),hex=wrap.querySelector(".hex");
+
+  function addSwatch(color,cls){ const s=document.createElement("button"); s.className="swatch"+(cls?" "+cls:"");
+    s.style.background=color; s.title=color; s.addEventListener("click",()=>set(color,true)); return s; }
+
+  function buildSwatches(){
+    sw.innerHTML="";
+    PALETTE.forEach(color=>sw.appendChild(addSwatch(color)));
+    if(RECENT_COLORS.length){
+      const div=document.createElement("span"); div.className="sw-div"; sw.appendChild(div);
+      const lab=document.createElement("span"); lab.className="recent-label"; lab.textContent="최근"; sw.appendChild(lab);
+      RECENT_COLORS.forEach(color=>sw.appendChild(addSwatch(color)));
+    }
+    mark(hex.value);
+  }
+  function mark(color){ sw.querySelectorAll(".swatch").forEach(x=>x.classList.toggle("active",x.title.toLowerCase()===color.toLowerCase())); }
+  function set(color,record){ if(!/^#[0-9a-fA-F]{6}$/.test(color))return; pick.value=color; hex.value=color; mark(color); if(record)pushRecentColor(color); onChange(); }
+
+  pick.addEventListener("input",()=>set(pick.value,false));
+  pick.addEventListener("change",()=>pushRecentColor(pick.value));
+  hex.addEventListener("input",()=>{let v=hex.value.trim(); if(!v.startsWith("#"))v="#"+v; if(/^#[0-9a-fA-F]{6}$/.test(v))set(v,false); else onChange();});
+  hex.addEventListener("blur",()=>{let v=hex.value.trim(); if(/^#[0-9a-fA-F]{6}$/.test(v))pushRecentColor(v);});
+
+  buildSwatches();
+  recentSubscribers.push(buildSwatches); // 최근색 갱신 시 다시 그림
+  return { el:wrap, get value(){return hex.value.trim();}, key:colorDef.key };
+}
+
+/* ================= 세그먼트 ================= */
+function makeSegment(state, segData){
+  const cmdKey=segData.cmd, cmd=COMMANDS[cmdKey];
+  const seg={ cmd:cmdKey, fieldEls:{}, colorCtls:[], el:null, space:segData.space!==undefined?segData.space:true };
+  const el=document.createElement("div"); el.className="segment"+(cmdKey==="plain"?"":" cmd");
+  el.innerHTML=`<div class="seg-head">
+      <span class="seg-type ${cmdKey==='plain'?'plain':''}">${cmd.label}</span>
+      <span class="spacer"></span>
+      <button class="seg-copy" title="이 조각 텍스트만 복사">텍스트 복사</button>
+      <label class="space-toggle" title="켜면 앞에 공백 한 칸을 붙입니다">
+        <input type="checkbox" class="spacechk" ${seg.space?'checked':''}><span class="st"></span><span>앞 공백</span>
+      </label>
+      <button class="seg-x" title="이 조각 삭제">✕</button>
+    </div><div class="seg-body"></div>`;
+  seg.el=el;
+  const body=el.querySelector(".seg-body");
+  cmd.fields.forEach(f=>{
+    const fd=document.createElement("div"); fd.className="field";
+    const val=(segData.values&&segData.values[f.key]!==undefined)?segData.values[f.key]:(f.default||"");
+    const input=f.type==="area"?`<textarea placeholder="${f.placeholder||''}">${esc(val)}</textarea>`:`<input type="text" class="txt" placeholder="${f.placeholder||''}" value="${esc(val)}">`;
+    fd.innerHTML=`<label>${f.label}</label>${input}`; body.appendChild(fd);
+    const inp=fd.querySelector("textarea,input"); inp.addEventListener("input",()=>render(state)); seg.fieldEls[f.key]=inp;
+  });
+  if(cmd.colors.length){
+    const row=document.createElement("div"); row.className="colorrow";
+    cmd.colors.forEach(cdef=>{const iv=segData.colors?segData.colors[cdef.key]:undefined; const ctl=makeColorCtl(cdef,()=>render(state),iv); seg.colorCtls.push(ctl); row.appendChild(ctl.el);});
+    body.appendChild(row);
+  }
+  el.querySelector(".spacechk").addEventListener("change",e=>{ seg.space=e.target.checked; render(state); });
+  el.querySelector(".seg-copy").addEventListener("click",async e=>{ await copyText(segPlainText(seg), e.target); });
+  el.querySelector(".seg-x").addEventListener("click",()=>{ const i=state.segs.indexOf(seg); if(i>-1)state.segs.splice(i,1); el.remove(); render(state); if(state.segs.length===0)addSegment(state,{cmd:"plain"}); });
+  return seg;
+}
+function addSegment(state, segData){ const seg=makeSegment(state,segData); state.segs.push(seg); state.segWrap.appendChild(seg.el); render(state); return seg; }
+
+/* 조각 하나의 대표 텍스트 */
+function segPlainText(seg){ const v={}; for(const k in seg.fieldEls)v[k]=seg.fieldEls[k].value;
+  return v.text!==undefined?v.text : (v.name!==undefined?v.name : (v.skill!==undefined?v.skill : (v.title!==undefined?v.title:""))); }
+
+/* ================= 블록 ================= */
+function addBlock(opts){
+  opts=opts||{};
+  const state={ segs:[], el:null, segWrap:null, descOn:opts.descOn!==undefined?opts.descOn:true };
+  const el=document.createElement("div"); el.className="block";
+  el.innerHTML=`<div class="block-head">
+      <button class="icon-btn fold" title="접기/펴기">▾</button>
+      <span class="block-num"></span><span class="block-title">블록</span>
+      <span class="block-preview-mini"></span>
+      <span class="spacer"></span>
+      <label class="desc-toggle on"><input type="checkbox" class="descchk" checked><span class="t"></span><span>/desc</span></label>
+      <button class="icon-btn up" title="위로">↑</button>
+      <button class="icon-btn down" title="아래로">↓</button>
+      <button class="icon-btn del" title="블록 삭제">✕</button>
+    </div>
+    <div class="segments"></div>
+    <div class="seg-add"><span class="lbl">조각 추가</span></div>
+    <div class="out"><span class="olabel">완성된 명령어</span><div class="code-out"></div>
+      <div class="acts">
+        <button class="btn primary act-copy">명령어 복사</button>
+        <button class="btn act-copytext">전체 텍스트 복사</button>
+        <button class="btn act-preview">미리보기</button>
+        <button class="btn act-dup">블록 복제</button>
+      </div>
+      <div class="preview"><div class="pbody"></div></div>
+    </div>`;
+  state.el=el; state.segWrap=el.querySelector(".segments");
+  const segAdd=el.querySelector(".seg-add");
+  INLINE_ORDER.forEach(key=>{ const b=document.createElement("button"); b.textContent="＋ "+COMMANDS[key].label; b.addEventListener("click",()=>addSegment(state,{cmd:key})); segAdd.appendChild(b); });
+  const descChk=el.querySelector(".descchk"),descLabel=el.querySelector(".desc-toggle");
+  descChk.checked=state.descOn; descLabel.classList.toggle("on",state.descOn);
+  descChk.addEventListener("change",()=>{state.descOn=descChk.checked; descLabel.classList.toggle("on",descChk.checked); render(state);});
+  el.addEventListener("mousedown",()=>selectBlock(state));
+  const foldBtn=el.querySelector(".fold");
+  state.collapsed=opts.collapsed||false;
+  function applyFold(){ el.classList.toggle("collapsed",state.collapsed); foldBtn.textContent=state.collapsed?"▸":"▾"; if(state.collapsed)updateMiniPreview(state); }
+  foldBtn.addEventListener("click",()=>{ state.collapsed=!state.collapsed; applyFold(); markDirty(); });
+  el.querySelector(".del").addEventListener("click",()=>{const i=blocks.indexOf(state); if(i>-1)blocks.splice(i,1); el.remove(); renumber(); refreshRangeSelectors(); if(selectedBlock===state)selectedBlock=null; markDirty();});
+  el.querySelector(".up").addEventListener("click",()=>moveBlock(state,-1));
+  el.querySelector(".down").addEventListener("click",()=>moveBlock(state,1));
+  el.querySelector(".act-copy").addEventListener("click",async e=>{await copyText(el.querySelector(".code-out").textContent,e.target);});
+  el.querySelector(".act-copytext").addEventListener("click",async e=>{await copyText(plainTextOf(state),e.target);});
+  el.querySelector(".act-dup").addEventListener("click",e=>{ duplicateBlock(state); });
+  const prevBtn=el.querySelector(".act-preview"),prevBox=el.querySelector(".preview");
+  prevBtn.addEventListener("click",()=>{prevBox.classList.toggle("show"); if(prevBox.classList.contains("show")){renderPreview(state); prevBtn.textContent="미리보기 닫기";}else prevBtn.textContent="미리보기";});
+  blocksWrap.appendChild(el); blocks.push(state);
+  const segList=opts.segs&&opts.segs.length?opts.segs:[{cmd:opts.firstCmd||"plain"}];
+  segList.forEach(sd=>addSegment(state,sd));
+  applyFold();
+  renumber(); refreshRangeSelectors(); selectBlock(state);
+  return state;
+}
+function duplicateBlock(state){
+  const data=serializeBlock(state);
+  const idx=blocks.indexOf(state);
+  const dup=addBlock({descOn:data.descOn, segs:data.segs, collapsed:state.collapsed});
+  // 방금 push된 dup을 원본 바로 뒤로 이동
+  blocks.pop();
+  blocks.splice(idx+1,0,dup);
+  const ref=blocks[idx+2]?blocks[idx+2].el:null;
+  blocksWrap.insertBefore(dup.el, ref);
+  renumber(); refreshRangeSelectors(); markDirty();
+  focusBlock(dup);
+  return dup;
+}
+function updateMiniPreview(state){
+  const mini=state.el.querySelector(".block-preview-mini"); if(!mini)return;
+  mini.textContent=plainTextOf(state).slice(0,40)||"(빈 블록)";
+}
+function selectBlock(state){ selectedBlock=state; blocks.forEach(b=>{ if(b.el)b.el.classList.toggle("sel",b===state && !b.isDivider); }); }
+function segValues(seg){ const v={}; for(const k in seg.fieldEls)v[k]=seg.fieldEls[k].value;
+  const c={}; seg.colorCtls.forEach(ctl=>c[ctl.key]=ctl.value); return {v,c}; }
+function joinParts(parts, segs){ let out=""; parts.forEach((p,i)=>{ if(p==="")return; if(out!==""&&segs[i].space)out+=" "; out+=p; }); return out; }
+function render(state){
+  if(state.isDivider)return;
+  const parts=state.segs.map(seg=>{ const {v,c}=segValues(seg); return COMMANDS[seg.cmd].build(v,c).code; });
+  const joined=joinParts(parts,state.segs);
+  state.el.querySelector(".code-out").textContent=state.descOn?"/desc "+joined:joined;
+  const pb=state.el.querySelector(".preview"); if(pb.classList.contains("show"))renderPreview(state);
+  if(state.collapsed)updateMiniPreview(state);
+  markDirty();
+}
+function renderPreview(state){ const html=state.segs.map(seg=>{ const {v,c}=segValues(seg); return COMMANDS[seg.cmd].build(v,c).preview; }).join(" ");
+  state.el.querySelector(".pbody").innerHTML=html; }
+function plainTextOf(state){ let out=""; state.segs.forEach((seg,i)=>{ const p=segPlainText(seg); if(p==="")return; if(out!==""&&seg.space)out+=" "; out+=p; }); return out; }
+function renumber(){ let n=0; blocks.forEach(b=>{ if(b.isDivider)return; n++; b.el.querySelector(".block-num").textContent=String(n).padStart(2,"0"); }); }
+function moveBlock(state,dir){ const i=blocks.indexOf(state),j=i+dir; if(j<0||j>=blocks.length)return;
+  blocks.splice(i,1); blocks.splice(j,0,state); const ref=blocks[j+1]?blocks[j+1].el:null; blocksWrap.insertBefore(state.el,ref); renumber(); refreshRangeSelectors(); markDirty(); }
+function focusBlock(state){ selectBlock(state); const f=state.el.querySelector("textarea,input.txt,input.dlabel"); if(f)f.focus(); state.el.scrollIntoView({behavior:"smooth",block:"center"}); }
+
+/* ===== 구간 나누기 블록 ===== */
+function addDividerBlock(opts){
+  opts=opts||{};
+  const state={ isDivider:true, el:null };
+  const el=document.createElement("div"); el.className="block divblock";
+  el.innerHTML=`<div class="div-move"><button class="dup" title="위로">↑</button><button class="ddn" title="아래로">↓</button></div>
+    <span class="dline"></span>
+    <input class="dlabel" placeholder="구간 이름" value="${esc(opts.label||"")}">
+    <span class="dline"></span>
+    <button class="div-x" title="구간 삭제">✕</button>`;
+  state.el=el;
+  el.querySelector(".dlabel").addEventListener("input",markDirty);
+  el.querySelector(".dup").addEventListener("click",()=>moveBlock(state,-1));
+  el.querySelector(".ddn").addEventListener("click",()=>moveBlock(state,1));
+  el.querySelector(".div-x").addEventListener("click",()=>{const i=blocks.indexOf(state); if(i>-1)blocks.splice(i,1); el.remove(); renumber(); refreshRangeSelectors(); markDirty();});
+  el.addEventListener("mousedown",()=>{selectedBlock=state;});
+  blocksWrap.appendChild(el); blocks.push(state);
+  renumber(); refreshRangeSelectors(); markDirty();
+  return state;
+}
+async function copyText(text,btn){
+  try{await navigator.clipboard.writeText(text);}
+  catch{const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();}
+  if(btn){const o=btn.textContent; btn.textContent="복사됨 ✓"; btn.classList.add("copied"); setTimeout(()=>{btn.textContent=o; btn.classList.remove("copied");},1200);}
+}
+document.getElementById("addBlock").addEventListener("click",()=>focusBlock(addBlock({firstCmd:"plain"})));
+document.getElementById("addDivider").addEventListener("click",()=>{const d=addDividerBlock({}); d.el.scrollIntoView({behavior:"smooth",block:"center"}); d.el.querySelector(".dlabel").focus();});
+document.getElementById("copyAll").addEventListener("click",e=>{const all=contentBlocks().map(b=>b.el.querySelector(".code-out").textContent).join("\n"); copyText(all,e.target);});
+
+/* ===== 콘텐츠(비-구분선) 블록만 ===== */
+function contentBlocks(){ return blocks.filter(b=>!b.isDivider); }
+
+/* ===== 구간 복사 ===== */
+const rangeFrom=document.getElementById("rangeFrom");
+const rangeTo=document.getElementById("rangeTo");
+function refreshRangeSelectors(){
+  const cb=contentBlocks();
+  const opts=cb.map((b,i)=>`<option value="${i}">${i+1}번</option>`).join("");
+  const pf=rangeFrom.value, pt=rangeTo.value;
+  rangeFrom.innerHTML=opts; rangeTo.innerHTML=opts;
+  if(cb.length){ rangeFrom.value=Math.min(pf||0,cb.length-1); rangeTo.value=Math.min(pt||cb.length-1,cb.length-1);
+    if(rangeTo.value==="")rangeTo.value=cb.length-1; }
+}
+document.getElementById("rangeCopy").addEventListener("click",e=>{
+  const cb=contentBlocks(); if(!cb.length)return;
+  let a=parseInt(rangeFrom.value),b=parseInt(rangeTo.value);
+  if(isNaN(a))a=0; if(isNaN(b))b=cb.length-1;
+  if(a>b)[a,b]=[b,a];
+  const txt=cb.slice(a,b+1).map(bl=>bl.el.querySelector(".code-out").textContent).join("\n");
+  copyText(txt,e.target);
+});
+
+/* ===== 찾기 ===== */
+const findInput=document.getElementById("findInput");
+const findCount=document.getElementById("findCount");
+let findHits=[], findIdx=-1;
+function runFind(){
+  const q=findInput.value.trim().toLowerCase();
+  blocks.forEach(b=>b.el&&b.el.classList.remove("hit"));
+  findHits=[]; findIdx=-1;
+  if(!q){ findCount.textContent=""; return; }
+  contentBlocks().forEach(b=>{ if(plainTextOf(b).toLowerCase().includes(q)) findHits.push(b); });
+  findCount.textContent=findHits.length?`${findHits.length}개`:"없음";
+  if(findHits.length){ findIdx=0; gotoHit(); }
+}
+function gotoHit(){
+  blocks.forEach(b=>b.el&&b.el.classList.remove("hit"));
+  const b=findHits[findIdx]; if(!b)return;
+  b.el.classList.add("hit");
+  b.el.scrollIntoView({behavior:"smooth",block:"center"});
+  findCount.textContent=`${findIdx+1}/${findHits.length}`;
+}
+let findTimer=null;
+findInput.addEventListener("input",()=>{ clearTimeout(findTimer); findTimer=setTimeout(runFind,250); });
+findInput.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); if(findHits.length){ findIdx=(findIdx+1)%findHits.length; gotoHit(); } else runFind(); } });
+
+/* ===== 맨 위/아래 ===== */
+const scrollFab=document.getElementById("scrollFab");
+document.getElementById("scrollTop").addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
+document.getElementById("scrollBottom").addEventListener("click",()=>window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"}));
+
+function loadBlocksFromProject(p){ blocksWrap.innerHTML=""; blocks=[]; selectedBlock=null;
+  scrollFab.classList.remove("hidden");
+  const list=(p.blocks&&p.blocks.length)?p.blocks:[{descOn:true,segs:[{cmd:"bgEmphasis"}]}];
+  list.forEach(bd=>{ if(bd.isDivider)addDividerBlock({label:bd.label}); else addBlock({descOn:bd.descOn, segs:bd.segs, collapsed:bd.collapsed}); });
+  refreshRangeSelectors();
+}
+window.addEventListener("beforeunload",()=>commitToProject());
+(function init(){ renderProjectList(); let last=null; try{last=localStorage.getItem(LAST_KEY);}catch(e){} if(last&&PROJECTS[last])openProject(last); })();
+</script>
+</body>
+</html>
