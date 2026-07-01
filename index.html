@@ -212,6 +212,23 @@
     width:26px; height:26px; border-radius:7px; cursor:pointer; font-size:12px; }
   .divblock .div-move button:hover{ border-color:var(--ink); color:var(--ink); }
 
+  /* keeper memo block */
+  .memoblock{ background:var(--paper); border:1.5px solid var(--line-2); border-radius:var(--radius);
+    padding:12px 14px; display:flex; gap:10px; align-items:flex-start; }
+  .memoblock .memo-icon{ font-size:15px; line-height:1.6; flex:none; filter:grayscale(1); opacity:.7; }
+  .memoblock .memo-body{ flex:1; }
+  .memoblock .memo-tag{ font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--ink-faint); font-weight:600; margin-bottom:5px; display:block; }
+  .memoblock textarea.memo-text{ width:100%; background:transparent; border:none; resize:vertical;
+    font-family:var(--sans); font-size:14px; line-height:1.6; color:var(--ink-soft); min-height:44px; padding:0; }
+  .memoblock textarea.memo-text:focus{ outline:none; }
+  .memoblock textarea.memo-text::placeholder{ color:var(--ink-faint); }
+  .memoblock .memo-side{ display:flex; flex-direction:column; gap:4px; flex:none; }
+  .memoblock .memo-side button{ background:var(--bg); border:1.5px solid var(--line-2); color:var(--ink-faint);
+    width:26px; height:26px; border-radius:7px; cursor:pointer; font-size:12px; transition:.12s; }
+  .memoblock .memo-side button:hover{ border-color:var(--ink); color:var(--ink); }
+  .memoblock .memo-side button.mx:hover{ border-color:var(--pink); color:var(--pink); }
+
   /* range copy modal-ish inline */
   .rangebar{ display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap;
     background:var(--paper); border:1.5px solid var(--line-2); border-radius:12px; padding:10px 14px; margin-top:14px; }
@@ -256,6 +273,7 @@
     <div class="addbar">
       <button class="add-block" id="addBlock">＋ 빈 블록 추가</button>
       <button class="add-block" id="addDivider" style="margin-left:8px;">┈ 구간 나누기</button>
+      <button class="add-block" id="addMemo" style="margin-left:8px;">📝 메모 추가</button>
     </div>
     <div class="rangebar">
       <span>구간 복사</span>
@@ -412,6 +430,7 @@ function commitToProject(){ if(!currentProjectId)return; const p=PROJECTS[curren
   p.blocks=blocks.map(serializeBlock); p.updated=Date.now(); flagSaved(saveStore(PROJECTS)); }
 saveBtn.addEventListener("click",()=>commitToProject());
 function serializeBlock(state){
+  if(state.isMemo) return { isMemo:true, text: state.el.querySelector(".memo-text").value };
   if(state.isDivider) return { isDivider:true, label: state.el.querySelector(".dlabel").value };
   return { descOn:state.descOn, collapsed:state.collapsed, segs:state.segs.map(seg=>({
   cmd:seg.cmd, space:seg.space,
@@ -569,12 +588,12 @@ function updateMiniPreview(state){
   const mini=state.el.querySelector(".block-preview-mini"); if(!mini)return;
   mini.textContent=plainTextOf(state).slice(0,40)||"(빈 블록)";
 }
-function selectBlock(state){ selectedBlock=state; blocks.forEach(b=>{ if(b.el)b.el.classList.toggle("sel",b===state && !b.isDivider); }); }
+function selectBlock(state){ selectedBlock=state; blocks.forEach(b=>{ if(b.el)b.el.classList.toggle("sel",b===state && !b.isDivider && !b.isMemo); }); }
 function segValues(seg){ const v={}; for(const k in seg.fieldEls)v[k]=seg.fieldEls[k].value;
   const c={}; seg.colorCtls.forEach(ctl=>c[ctl.key]=ctl.value); return {v,c}; }
 function joinParts(parts, segs){ let out=""; parts.forEach((p,i)=>{ if(p==="")return; if(out!==""&&segs[i].space)out+=" "; out+=p; }); return out; }
 function render(state){
-  if(state.isDivider)return;
+  if(state.isDivider||state.isMemo)return;
   const parts=state.segs.map(seg=>{ const {v,c}=segValues(seg); return COMMANDS[seg.cmd].build(v,c).code; });
   const joined=joinParts(parts,state.segs);
   state.el.querySelector(".code-out").textContent=state.descOn?"/desc "+joined:joined;
@@ -585,7 +604,7 @@ function render(state){
 function renderPreview(state){ const html=state.segs.map(seg=>{ const {v,c}=segValues(seg); return COMMANDS[seg.cmd].build(v,c).preview; }).join(" ");
   state.el.querySelector(".pbody").innerHTML=html; }
 function plainTextOf(state){ let out=""; state.segs.forEach((seg,i)=>{ const p=segPlainText(seg); if(p==="")return; if(out!==""&&seg.space)out+=" "; out+=p; }); return out; }
-function renumber(){ let n=0; blocks.forEach(b=>{ if(b.isDivider)return; n++; b.el.querySelector(".block-num").textContent=String(n).padStart(2,"0"); }); }
+function renumber(){ let n=0; blocks.forEach(b=>{ if(b.isDivider||b.isMemo)return; n++; b.el.querySelector(".block-num").textContent=String(n).padStart(2,"0"); }); }
 function moveBlock(state,dir){ const i=blocks.indexOf(state),j=i+dir; if(j<0||j>=blocks.length)return;
   blocks.splice(i,1); blocks.splice(j,0,state); const ref=blocks[j+1]?blocks[j+1].el:null; blocksWrap.insertBefore(state.el,ref); renumber(); refreshRangeSelectors(); markDirty(); }
 function focusBlock(state){ selectBlock(state); const f=state.el.querySelector("textarea,input.txt,input.dlabel"); if(f)f.focus(); state.el.scrollIntoView({behavior:"smooth",block:"center"}); }
@@ -610,6 +629,33 @@ function addDividerBlock(opts){
   renumber(); refreshRangeSelectors(); markDirty();
   return state;
 }
+
+/* ===== 키퍼 메모 블록 ===== */
+function addMemoBlock(opts){
+  opts=opts||{};
+  const state={ isMemo:true, el:null };
+  const el=document.createElement("div"); el.className="block memoblock";
+  el.innerHTML=`<span class="memo-icon">📝</span>
+    <div class="memo-body">
+      <span class="memo-tag">키퍼 메모</span>
+      <textarea class="memo-text" placeholder="여기에 메모를 남겨 주세요. (Roll20에는 복사되지 않습니다)"></textarea>
+    </div>
+    <div class="memo-side">
+      <button class="mup" title="위로">↑</button>
+      <button class="mdn" title="아래로">↓</button>
+      <button class="mx" title="메모 삭제">✕</button>
+    </div>`;
+  state.el=el;
+  const txt=el.querySelector(".memo-text"); txt.value=opts.text||"";
+  txt.addEventListener("input",markDirty);
+  el.querySelector(".mup").addEventListener("click",()=>moveBlock(state,-1));
+  el.querySelector(".mdn").addEventListener("click",()=>moveBlock(state,1));
+  el.querySelector(".mx").addEventListener("click",()=>{const i=blocks.indexOf(state); if(i>-1)blocks.splice(i,1); el.remove(); renumber(); refreshRangeSelectors(); markDirty();});
+  el.addEventListener("mousedown",()=>{selectedBlock=state;});
+  blocksWrap.appendChild(el); blocks.push(state);
+  renumber(); refreshRangeSelectors(); markDirty();
+  return state;
+}
 async function copyText(text,btn){
   try{await navigator.clipboard.writeText(text);}
   catch{const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();}
@@ -617,10 +663,11 @@ async function copyText(text,btn){
 }
 document.getElementById("addBlock").addEventListener("click",()=>focusBlock(addBlock({firstCmd:"plain"})));
 document.getElementById("addDivider").addEventListener("click",()=>{const d=addDividerBlock({}); d.el.scrollIntoView({behavior:"smooth",block:"center"}); d.el.querySelector(".dlabel").focus();});
+document.getElementById("addMemo").addEventListener("click",()=>{const m=addMemoBlock({}); m.el.scrollIntoView({behavior:"smooth",block:"center"}); m.el.querySelector(".memo-text").focus();});
 document.getElementById("copyAll").addEventListener("click",e=>{const all=contentBlocks().map(b=>b.el.querySelector(".code-out").textContent).join("\n"); copyText(all,e.target);});
 
 /* ===== 콘텐츠(비-구분선) 블록만 ===== */
-function contentBlocks(){ return blocks.filter(b=>!b.isDivider); }
+function contentBlocks(){ return blocks.filter(b=>!b.isDivider && !b.isMemo); }
 
 /* ===== 구간 복사 ===== */
 const rangeFrom=document.getElementById("rangeFrom");
@@ -646,12 +693,17 @@ document.getElementById("rangeCopy").addEventListener("click",e=>{
 const findInput=document.getElementById("findInput");
 const findCount=document.getElementById("findCount");
 let findHits=[], findIdx=-1;
+function searchTextOf(b){
+  if(b.isMemo){ const t=b.el.querySelector(".memo-text"); return t?t.value:""; }
+  if(b.isDivider){ const l=b.el.querySelector(".dlabel"); return l?l.value:""; }
+  return plainTextOf(b);
+}
 function runFind(){
   const q=findInput.value.trim().toLowerCase();
   blocks.forEach(b=>b.el&&b.el.classList.remove("hit"));
   findHits=[]; findIdx=-1;
   if(!q){ findCount.textContent=""; return; }
-  contentBlocks().forEach(b=>{ if(plainTextOf(b).toLowerCase().includes(q)) findHits.push(b); });
+  blocks.forEach(b=>{ if(searchTextOf(b).toLowerCase().includes(q)) findHits.push(b); });
   findCount.textContent=findHits.length?`${findHits.length}개`:"없음";
   if(findHits.length){ findIdx=0; gotoHit(); }
 }
@@ -674,7 +726,7 @@ document.getElementById("scrollBottom").addEventListener("click",()=>window.scro
 function loadBlocksFromProject(p){ blocksWrap.innerHTML=""; blocks=[]; selectedBlock=null;
   scrollFab.classList.remove("hidden");
   const list=(p.blocks&&p.blocks.length)?p.blocks:[{descOn:true,segs:[{cmd:"bgEmphasis"}]}];
-  list.forEach(bd=>{ if(bd.isDivider)addDividerBlock({label:bd.label}); else addBlock({descOn:bd.descOn, segs:bd.segs, collapsed:bd.collapsed}); });
+  list.forEach(bd=>{ if(bd.isMemo)addMemoBlock({text:bd.text}); else if(bd.isDivider)addDividerBlock({label:bd.label}); else addBlock({descOn:bd.descOn, segs:bd.segs, collapsed:bd.collapsed}); });
   refreshRangeSelectors();
 }
 window.addEventListener("beforeunload",()=>commitToProject());
