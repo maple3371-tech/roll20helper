@@ -242,6 +242,77 @@
     background:rgba(255,255,255,.55); backdrop-filter:blur(6px); color:var(--ink); font-size:18px;
     cursor:pointer; transition:.14s; box-shadow:0 4px 14px rgba(0,0,0,.08); }
   .scroll-fab button:hover{ background:rgba(255,255,255,.9); border-color:var(--ink); }
+
+  /* ===== auth bar ===== */
+  .authbox{ display:flex; align-items:center; gap:10px; }
+  .authbox .avatar{ width:28px; height:28px; border-radius:50%; border:1.5px solid var(--line-2); object-fit:cover; }
+  .authbox .uname{ font-family:var(--mono); font-size:11px; color:var(--ink-soft); max-width:150px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sync-state{ font-family:var(--mono); font-size:10px; color:var(--ink-faint); }
+  .sync-state.synced{ color:var(--ok); }
+
+  /* ===== modal ===== */
+  .modal-bg{ position:fixed; inset:0; background:rgba(20,20,20,.35); backdrop-filter:blur(3px);
+    z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .modal{ background:var(--paper); border:1.5px solid var(--line-2); border-radius:var(--radius);
+    width:100%; max-width:560px; max-height:86vh; overflow-y:auto; padding:22px;
+    box-shadow:0 20px 60px rgba(0,0,0,.16); }
+  .modal h2{ font-family:var(--round); font-weight:700; font-size:19px; margin:0 0 4px; }
+  .modal .msub{ color:var(--ink-faint); font-size:13px; margin:0 0 18px; }
+  .modal .mclose{ float:right; background:var(--bg); border:1.5px solid var(--line-2); color:var(--ink-faint);
+    width:30px; height:30px; border-radius:9px; cursor:pointer; font-size:14px; }
+  .modal .mclose:hover{ border-color:var(--ink); color:var(--ink); }
+  .modal .mfoot{ display:flex; gap:8px; justify-content:flex-end; margin-top:18px; flex-wrap:wrap; }
+
+  /* replace pairs */
+  .pairs{ display:flex; flex-direction:column; gap:8px; }
+  .pair{ display:flex; gap:8px; align-items:center; }
+  .pair input{ flex:1; min-width:0; background:var(--paper); border:1.5px solid var(--line-2);
+    border-radius:9px; padding:8px 10px; font-family:var(--sans); font-size:14px; color:var(--ink); }
+  .pair input:focus{ outline:none; border-color:var(--ink); }
+  .pair .arrow{ font-family:var(--mono); font-size:12px; color:var(--ink-faint); flex:none; }
+  .pair .px{ background:var(--bg); border:1.5px solid var(--line-2); color:var(--ink-faint);
+    width:30px; height:30px; border-radius:8px; cursor:pointer; flex:none; font-size:13px; }
+  .pair .px:hover{ border-color:var(--pink); color:var(--pink); }
+  .addpair{ margin-top:10px; font-family:var(--round); font-size:12.5px; font-weight:600;
+    padding:7px 14px; border-radius:999px; border:1.5px dashed var(--line-2); background:var(--paper);
+    color:var(--ink-soft); cursor:pointer; }
+  .addpair:hover{ border-color:var(--ink); color:var(--ink); border-style:solid; }
+  .opts{ display:flex; gap:14px; margin-top:14px; flex-wrap:wrap; }
+  .opt{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; user-select:none;
+    font-size:12.5px; color:var(--ink-soft); }
+  .opt input{ position:absolute; opacity:0; width:0; height:0; }
+  .opt .box{ width:17px; height:17px; border:1.5px solid var(--line-2); border-radius:5px;
+    display:flex; align-items:center; justify-content:center; font-size:11px; color:transparent; transition:.12s; }
+  .opt input:checked + .box{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+  .preview-diff{ margin-top:14px; background:var(--bg); border:1.5px solid var(--line-2);
+    border-radius:10px; padding:12px; font-size:13px; max-height:180px; overflow-y:auto; line-height:1.7; }
+  .preview-diff .old{ background:#ffe4e4; text-decoration:line-through; color:#b33; padding:0 2px; border-radius:3px; }
+  .preview-diff .new{ background:#e0f5e6; color:#186b38; padding:0 2px; border-radius:3px; font-weight:600; }
+  .preview-diff .none{ color:var(--ink-faint); }
+
+  /* pdf */
+  .dropzone{ border:2px dashed var(--line-2); border-radius:12px; padding:30px 20px; text-align:center;
+    color:var(--ink-faint); cursor:pointer; transition:.14s; background:var(--bg); }
+  .dropzone:hover, .dropzone.over{ border-color:var(--ink); color:var(--ink); }
+  .dropzone .big{ font-size:26px; margin-bottom:8px; }
+  .pdf-out{ margin-top:14px; }
+  .pdf-out textarea{ width:100%; min-height:200px; background:var(--bg); border:1.5px solid var(--line-2);
+    border-radius:10px; padding:11px; font-family:var(--sans); font-size:13.5px; line-height:1.6;
+    color:var(--ink); resize:vertical; }
+  .pdf-out textarea:focus{ outline:none; border-color:var(--ink); }
+  .pdf-prog{ font-family:var(--mono); font-size:11px; color:var(--ink-faint); margin-top:8px; }
+
+  /* extension download card */
+  .extcard{ background:var(--paper); border:1.5px solid var(--line-2); border-radius:var(--radius);
+    padding:18px 20px; margin-top:16px; display:flex; gap:14px; align-items:flex-start; }
+  .extcard .eicon{ font-size:22px; flex:none; filter:grayscale(1); opacity:.75; }
+  .extcard .ebody{ flex:1; }
+  .extcard .etitle{ font-family:var(--round); font-weight:700; font-size:15px; margin-bottom:3px; }
+  .extcard .edesc{ font-size:12.5px; color:var(--ink-faint); line-height:1.6; }
+  .extcard details{ margin-top:10px; }
+  .extcard summary{ cursor:pointer; font-size:12px; color:var(--ink-soft); font-weight:600; }
+  .extcard ol{ margin:8px 0 0; padding-left:18px; font-size:12.5px; color:var(--ink-soft); line-height:1.8; }
 </style>
 </head>
 <body>
@@ -249,7 +320,11 @@
   <div class="topbar">
     <h1>Roll20 명령어 도우미</h1>
     <span class="spacer"></span>
+    <span class="sync-state" id="syncState"></span>
     <span class="save-state" id="saveState"></span>
+    <div class="authbox" id="authBox">
+      <button class="btn small" id="loginBtn">Google 로그인</button>
+    </div>
     <button class="btn ghost small hidden" id="backBtn">← 프로젝트 목록</button>
     <button class="btn primary small hidden" id="saveBtn">저장</button>
   </div>
@@ -258,12 +333,35 @@
     <div class="plist" id="projectList"></div>
     <div class="empty-note hidden" id="emptyNote">아직 프로젝트가 없습니다. 새 프로젝트를 만들어 주세요.</div>
     <button class="new-project" id="newProject">＋ 새 프로젝트 만들기</button>
+
+    <div class="extcard">
+      <span class="eicon">🧩</span>
+      <div class="ebody">
+        <div class="etitle">포스타입 백업 (Word 저장)</div>
+        <div class="edesc">포스타입 게시글을 이미지까지 포함해 Word(.doc) 또는 HTML 파일로 저장하는 크롬 확장 프로그램입니다.</div>
+        <details>
+          <summary>설치 방법 보기</summary>
+          <ol>
+            <li>아래 버튼으로 zip 파일을 내려받고 압축을 풉니다.</li>
+            <li>Chrome 주소창에 <code>chrome://extensions</code> 를 입력합니다.</li>
+            <li>우측 상단의 <b>개발자 모드</b>를 켭니다.</li>
+            <li><b>압축해제된 확장 프로그램을 로드</b>를 눌러 압축을 푼 폴더를 선택합니다.</li>
+            <li>포스타입 게시글에서 확장 아이콘을 누르면 저장됩니다.</li>
+          </ol>
+        </details>
+        <div style="margin-top:12px;">
+          <a class="btn primary small" id="extDownload" href="postype-backup.zip" download style="text-decoration:none; display:inline-block;">확장 프로그램 내려받기</a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="editor hidden" id="editorView">
     <div class="findbar">
       <input type="text" id="findInput" placeholder="🔎 텍스트로 블록 찾기 (Enter로 다음)">
       <span class="findcount" id="findCount"></span>
+      <button class="btn small" id="openReplace">치환</button>
+      <button class="btn small" id="openPdf">PDF 불러오기</button>
     </div>
     <div class="toolbar">
       <span class="glabel">새 블록 만들기 · 명령어 선택</span>
@@ -289,6 +387,50 @@
 <div class="scroll-fab hidden" id="scrollFab">
   <button id="scrollTop" title="맨 위로">↑</button>
   <button id="scrollBottom" title="맨 아래로">↓</button>
+</div>
+
+<!-- ===== 치환 모달 ===== -->
+<div class="modal-bg hidden" id="replaceModal">
+  <div class="modal">
+    <button class="mclose" data-close="replaceModal">✕</button>
+    <h2>단어 치환</h2>
+    <p class="msub">바꿀 단어를 등록하세요. 뒤에 붙은 조사(은/는, 이/가, 을/를 등)는 받침을 인식해 자동으로 맞춰집니다.</p>
+    <div class="pairs" id="pairs"></div>
+    <button class="addpair" id="addPair">＋ 치환 쌍 추가</button>
+    <div class="opts">
+      <label class="opt"><input type="checkbox" id="optJosa" checked><span class="box">✓</span>조사 자동 보정</label>
+      <label class="opt"><input type="checkbox" id="optCase"><span class="box">✓</span>대소문자 구분</label>
+      <label class="opt"><input type="checkbox" id="optMemo" checked><span class="box">✓</span>메모·구간 이름도 포함</label>
+    </div>
+    <div class="preview-diff" id="replacePreview"><span class="none">치환할 단어를 입력하면 미리보기가 표시됩니다.</span></div>
+    <div class="mfoot">
+      <button class="btn" data-close="replaceModal">취소</button>
+      <button class="btn primary" id="applyReplace">모두 치환</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PDF 모달 ===== -->
+<div class="modal-bg hidden" id="pdfModal">
+  <div class="modal">
+    <button class="mclose" data-close="pdfModal">✕</button>
+    <h2>PDF에서 텍스트 불러오기</h2>
+    <p class="msub">텍스트가 들어 있는 PDF에서 글자를 추출합니다. 스캔한 이미지 PDF는 추출되지 않습니다.</p>
+    <div class="dropzone" id="pdfDrop">
+      <div class="big">📄</div>
+      <div>PDF 파일을 여기에 끌어다 놓거나 클릭해서 선택하세요</div>
+      <input type="file" id="pdfFile" accept="application/pdf" style="display:none;">
+    </div>
+    <div class="pdf-prog" id="pdfProg"></div>
+    <div class="pdf-out hidden" id="pdfOut">
+      <textarea id="pdfText" placeholder="추출된 텍스트가 여기에 표시됩니다."></textarea>
+    </div>
+    <div class="mfoot">
+      <button class="btn" data-close="pdfModal">닫기</button>
+      <button class="btn" id="pdfCopy">텍스트 복사</button>
+      <button class="btn primary" id="pdfToBlocks">문단별로 블록 만들기</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -730,7 +872,383 @@ function loadBlocksFromProject(p){ blocksWrap.innerHTML=""; blocks=[]; selectedB
   refreshRangeSelectors();
 }
 window.addEventListener("beforeunload",()=>commitToProject());
+
+/* ==================================================================
+   한글 조사 자동 보정 엔진
+================================================================== */
+function lastCharInfo(word){
+  if(!word) return null;
+  const ch=word[word.length-1], code=ch.charCodeAt(0);
+  if(code>=0xAC00 && code<=0xD7A3){            // 한글 음절
+    const jong=(code-0xAC00)%28;
+    return { hasBatchim:jong!==0, isRieul:jong===8 };
+  }
+  if(/[0-9]/.test(ch)){                         // 숫자 발음 기준
+    const b={'0':true,'1':true,'3':true,'6':true,'7':true,'8':true,'2':false,'4':false,'5':false,'9':false};
+    return { hasBatchim:b[ch], isRieul:ch==='1'||ch==='7'||ch==='8' };
+  }
+  if(/[a-zA-Z]/.test(ch)){                      // 영문(근사)
+    const noB='aeiouwy';
+    return { hasBatchim:!noB.includes(ch.toLowerCase()), isRieul:ch.toLowerCase()==='l' };
+  }
+  return null;
+}
+const JOSA_MAP={
+  '은':['은','는'],'는':['은','는'],
+  '이':['이','가'],'가':['이','가'],
+  '을':['을','를'],'를':['을','를'],
+  '과':['과','와'],'와':['과','와'],
+  '아':['아','야'],'야':['아','야'],
+  '이라':['이라','라'],'라':['이라','라'],
+  '이랑':['이랑','랑'],'랑':['이랑','랑'],
+  '이나':['이나','나'],'나':['이나','나'],
+  '이며':['이며','며'],'며':['이며','며'],
+  '이다':['이다','다'],
+  '으로서':['으로서','로서'],'로서':['으로서','로서'],
+  '으로써':['으로써','로써'],'로써':['으로써','로써'],
+  '으로':['으로','로'],'로':['으로','로'],
+};
+function fixJosa(word,josa){
+  const info=lastCharInfo(word);
+  if(!info||!JOSA_MAP[josa]) return josa;
+  const [withB,withoutB]=JOSA_MAP[josa];
+  if(josa.startsWith('으로')||josa==='로'||josa==='로서'||josa==='로써'){
+    if(info.isRieul) return withoutB;
+    return info.hasBatchim?withB:withoutB;
+  }
+  return info.hasBatchim?withB:withoutB;
+}
+function escapeRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+const JOSA_KEYS=Object.keys(JOSA_MAP).sort((a,b)=>b.length-a.length);
+
+/* text 안의 from → to 치환 (josa=true면 조사 보정) */
+function replaceOne(text,from,to,{josa=true,caseSensitive=false}={}){
+  if(!from) return text;
+  const flags = caseSensitive?'g':'gi';
+  if(!josa){ return text.replace(new RegExp(escapeRe(from),flags), to); }
+  const re=new RegExp(escapeRe(from)+'('+JOSA_KEYS.join('|')+')?',flags);
+  return text.replace(re,(m,j)=> j? to+fixJosa(to,j) : to);
+}
+function replaceAll(text,pairs,opts){
+  let out=text;
+  pairs.forEach(p=>{ if(p.from) out=replaceOne(out,p.from,p.to,opts); });
+  return out;
+}
+
+/* ==================================================================
+   치환 패널
+================================================================== */
+const replaceModal=document.getElementById("replaceModal");
+const pairsWrap=document.getElementById("pairs");
+const optJosa=document.getElementById("optJosa");
+const optCase=document.getElementById("optCase");
+const optMemo=document.getElementById("optMemo");
+const replacePreview=document.getElementById("replacePreview");
+
+function openModal(id){ document.getElementById(id).classList.remove("hidden"); }
+function closeModal(id){ document.getElementById(id).classList.add("hidden"); }
+document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>closeModal(b.dataset.close)));
+document.querySelectorAll(".modal-bg").forEach(bg=>bg.addEventListener("mousedown",e=>{ if(e.target===bg) bg.classList.add("hidden"); }));
+
+function addPairRow(from="",to=""){
+  const row=document.createElement("div"); row.className="pair";
+  row.innerHTML=`<input class="pfrom" placeholder="찾을 단어 (예: KPC)" value="${esc(from)}">
+    <span class="arrow">→</span>
+    <input class="pto" placeholder="바꿀 단어 (예: 강민아)" value="${esc(to)}">
+    <button class="px" title="삭제">✕</button>`;
+  row.querySelector(".px").addEventListener("click",()=>{ row.remove(); if(!pairsWrap.children.length)addPairRow(); updateReplacePreview(); });
+  row.querySelectorAll("input").forEach(i=>i.addEventListener("input",updateReplacePreview));
+  pairsWrap.appendChild(row);
+  return row;
+}
+document.getElementById("addPair").addEventListener("click",()=>{ addPairRow().querySelector(".pfrom").focus(); });
+[optJosa,optCase,optMemo].forEach(o=>o.addEventListener("change",updateReplacePreview));
+
+function currentPairs(){
+  return [...pairsWrap.querySelectorAll(".pair")].map(r=>({
+    from:r.querySelector(".pfrom").value.trim(),
+    to:r.querySelector(".pto").value
+  })).filter(p=>p.from);
+}
+function currentOpts(){ return { josa:optJosa.checked, caseSensitive:optCase.checked }; }
+
+/* 모든 편집 가능한 텍스트 필드를 수집 */
+function editableFields(includeMeta){
+  const list=[];
+  blocks.forEach(b=>{
+    if(b.isMemo){ if(includeMeta) list.push(b.el.querySelector(".memo-text")); return; }
+    if(b.isDivider){ if(includeMeta) list.push(b.el.querySelector(".dlabel")); return; }
+    b.segs.forEach(seg=>{ for(const k in seg.fieldEls) list.push(seg.fieldEls[k]); });
+  });
+  return list;
+}
+
+function updateReplacePreview(){
+  const pairs=currentPairs();
+  if(!pairs.length){ replacePreview.innerHTML='<span class="none">치환할 단어를 입력하면 미리보기가 표시됩니다.</span>'; return; }
+  const opts=currentOpts();
+  const fields=editableFields(optMemo.checked);
+  let count=0; const samples=[];
+  fields.forEach(f=>{
+    const before=f.value;
+    const after=replaceAll(before,pairs,opts);
+    if(before!==after){
+      count++;
+      if(samples.length<5) samples.push({before,after});
+    }
+  });
+  if(!count){ replacePreview.innerHTML='<span class="none">일치하는 단어가 없습니다.</span>'; return; }
+  const html=samples.map(s=>
+    `<div style="margin-bottom:8px;"><span class="old">${esc(s.before.slice(0,70))}</span><br>
+     <span class="new">${esc(s.after.slice(0,70))}</span></div>`).join("");
+  replacePreview.innerHTML=`<div style="font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-bottom:8px;">${count}개 항목이 변경됩니다</div>${html}`;
+}
+
+document.getElementById("openReplace").addEventListener("click",()=>{
+  if(!pairsWrap.children.length) addPairRow();
+  updateReplacePreview();
+  openModal("replaceModal");
+});
+document.getElementById("applyReplace").addEventListener("click",()=>{
+  const pairs=currentPairs();
+  if(!pairs.length){ alert("치환할 단어를 입력해 주세요."); return; }
+  const opts=currentOpts();
+  const fields=editableFields(optMemo.checked);
+  let changed=0;
+  fields.forEach(f=>{
+    const after=replaceAll(f.value,pairs,opts);
+    if(after!==f.value){ f.value=after; changed++; f.dispatchEvent(new Event("input",{bubbles:true})); }
+  });
+  blocks.forEach(b=>{ if(!b.isMemo&&!b.isDivider) render(b); });
+  closeModal("replaceModal");
+  markDirty();
+  alert(changed?`${changed}개 항목을 치환했습니다.`:"일치하는 단어가 없습니다.");
+});
+
+/* ==================================================================
+   PDF 텍스트 추출
+================================================================== */
+const pdfDrop=document.getElementById("pdfDrop");
+const pdfFile=document.getElementById("pdfFile");
+const pdfProg=document.getElementById("pdfProg");
+const pdfOut=document.getElementById("pdfOut");
+const pdfTextEl=document.getElementById("pdfText");
+
+document.getElementById("openPdf").addEventListener("click",()=>openModal("pdfModal"));
+pdfDrop.addEventListener("click",()=>pdfFile.click());
+pdfDrop.addEventListener("dragover",e=>{e.preventDefault(); pdfDrop.classList.add("over");});
+pdfDrop.addEventListener("dragleave",()=>pdfDrop.classList.remove("over"));
+pdfDrop.addEventListener("drop",e=>{ e.preventDefault(); pdfDrop.classList.remove("over");
+  const f=e.dataTransfer.files[0]; if(f) handlePdf(f); });
+pdfFile.addEventListener("change",e=>{ const f=e.target.files[0]; if(f) handlePdf(f); });
+
+async function ensurePdfJs(){
+  if(window.pdfjsLib) return window.pdfjsLib;
+  await new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload=res; s.onerror=()=>rej(new Error("PDF 라이브러리를 불러오지 못했습니다."));
+    document.head.appendChild(s);
+  });
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  return window.pdfjsLib;
+}
+
+async function handlePdf(file){
+  if(file.type!=="application/pdf"){ pdfProg.textContent="PDF 파일만 지원합니다."; return; }
+  pdfProg.textContent="라이브러리를 불러오는 중…";
+  try{
+    const pdfjsLib=await ensurePdfJs();
+    pdfProg.textContent="파일을 읽는 중…";
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    let full="";
+    for(let i=1;i<=pdf.numPages;i++){
+      pdfProg.textContent=`텍스트 추출 중… (${i}/${pdf.numPages}쪽)`;
+      const page=await pdf.getPage(i);
+      const tc=await page.getTextContent();
+      // 같은 y좌표는 한 줄로 묶기
+      let line="", lastY=null, pageText="";
+      tc.items.forEach(it=>{
+        const y=it.transform[5];
+        if(lastY!==null && Math.abs(y-lastY)>3){ pageText+=line.trim()+"\n"; line=""; }
+        line+=it.str;
+        lastY=y;
+      });
+      pageText+=line.trim();
+      full+=pageText.trim()+"\n\n";
+    }
+    full=full.replace(/\n{3,}/g,"\n\n").trim();
+    if(!full){ pdfProg.textContent="텍스트를 찾지 못했습니다. 스캔된 이미지 PDF일 수 있습니다."; return; }
+    pdfTextEl.value=full;
+    pdfOut.classList.remove("hidden");
+    pdfProg.textContent=`완료 · ${pdf.numPages}쪽, ${full.length.toLocaleString()}자`;
+  }catch(err){
+    pdfProg.textContent="오류: "+err.message;
+  }
+}
+
+document.getElementById("pdfCopy").addEventListener("click",e=>copyText(pdfTextEl.value,e.target));
+document.getElementById("pdfToBlocks").addEventListener("click",()=>{
+  const txt=pdfTextEl.value.trim();
+  if(!txt){ alert("먼저 PDF를 불러와 주세요."); return; }
+  const paras=txt.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean);
+  if(!paras.length){ alert("문단을 찾지 못했습니다."); return; }
+  if(paras.length>300 && !confirm(`${paras.length}개 문단이 생성됩니다. 계속할까요?`)) return;
+  paras.forEach(p=>addBlock({firstCmd:"plain", segs:[{cmd:"plain", values:{text:p}}]}));
+  closeModal("pdfModal");
+  markDirty();
+  alert(`${paras.length}개 블록을 추가했습니다.`);
+});
+
 (function init(){ renderProjectList(); let last=null; try{last=localStorage.getItem(LAST_KEY);}catch(e){} if(last&&PROJECTS[last])openProject(last); })();
+
+/* ==================================================================
+   Firebase 연동을 위한 훅 (module 스크립트에서 사용)
+================================================================== */
+window.__app = {
+  getProjects: ()=>PROJECTS,
+  setProjects: (data)=>{ PROJECTS=data||{}; saveStore(PROJECTS); renderProjectList(); },
+  saveLocal: ()=>saveStore(PROJECTS),
+  renderList: ()=>renderProjectList(),
+  commit: ()=>commitToProject(),
+  currentProjectId: ()=>currentProjectId,
+  goHome: ()=>goHome(),
+  onDirty: null,   // Firebase가 구독
+};
+/* markDirty가 발생할 때 클라우드에도 알림 */
+const __origMarkDirty = markDirty;
+markDirty = function(){ __origMarkDirty(); if(window.__app.onDirty) window.__app.onDirty(); };
+</script>
+
+<!-- ===== Firebase (Google 로그인 + Firestore 동기화) ===== -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA9hAtLBoOOR2_HXZF1lKBQju9wJmp3lgo",
+  authDomain: "trpgroll20-e30e7.firebaseapp.com",
+  projectId: "trpgroll20-e30e7",
+  storageBucket: "trpgroll20-e30e7.firebasestorage.app",
+  messagingSenderId: "655216944673",
+  appId: "1:655216944673:web:23f9db1ae44a8dec25e560",
+  measurementId: "G-MCRMQB0T74"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth  = getAuth(fbApp);
+const db    = getFirestore(fbApp);
+const provider = new GoogleAuthProvider();
+
+const authBox   = document.getElementById("authBox");
+const syncState = document.getElementById("syncState");
+let currentUser = null;
+let syncTimer   = null;
+let pulling     = false;   // 클라우드→로컬 반영 중엔 업로드 안 함
+
+function setSync(msg, ok){
+  syncState.textContent = msg;
+  syncState.classList.toggle("synced", !!ok);
+}
+
+/* ---------- 로그인 UI ---------- */
+function renderAuth(user){
+  authBox.innerHTML = "";
+  if(user){
+    const img = document.createElement("img");
+    img.className="avatar"; img.src=user.photoURL||""; img.alt="";
+    img.onerror=()=>{ img.style.display="none"; };
+    const name = document.createElement("span");
+    name.className="uname"; name.textContent=user.displayName||user.email||"사용자";
+    const out = document.createElement("button");
+    out.className="btn small ghost"; out.textContent="로그아웃";
+    out.addEventListener("click", ()=>signOut(auth));
+    authBox.append(img, name, out);
+  }else{
+    const inBtn = document.createElement("button");
+    inBtn.className="btn small"; inBtn.id="loginBtn"; inBtn.textContent="Google 로그인";
+    inBtn.addEventListener("click", async ()=>{
+      try{ await signInWithPopup(auth, provider); }
+      catch(e){ setSync("로그인 실패", false); console.error(e); }
+    });
+    authBox.append(inBtn);
+  }
+}
+
+/* ---------- 클라우드 ↔ 로컬 ---------- */
+function userDoc(uid){ return doc(db, "users", uid); }
+
+async function pullFromCloud(user){
+  setSync("불러오는 중…", false);
+  try{
+    const snap = await getDoc(userDoc(user.uid));
+    const local = window.__app.getProjects();
+    if(snap.exists()){
+      const cloud = snap.data().projects || {};
+      // 병합: updated가 더 최신인 쪽을 채택
+      const merged = { ...local };
+      Object.keys(cloud).forEach(id=>{
+        if(!merged[id] || (cloud[id].updated||0) > (merged[id].updated||0)) merged[id]=cloud[id];
+      });
+      pulling = true;
+      window.__app.setProjects(merged);
+      pulling = false;
+      setSync("동기화됨 ✓", true);
+      // 로컬에만 있던 것들을 올려 둠
+      if(Object.keys(local).length) pushToCloud(true);
+    }else{
+      await pushToCloud(true);   // 첫 로그인: 로컬 것을 올림
+    }
+  }catch(e){
+    console.error(e);
+    setSync("동기화 실패 (오프라인)", false);
+  }
+}
+
+async function pushToCloud(force){
+  if(!currentUser || pulling) return;
+  setSync("동기화 중…", false);
+  try{
+    await setDoc(userDoc(currentUser.uid), {
+      projects: window.__app.getProjects(),
+      updated: Date.now()
+    }, { merge:true });
+    setSync("동기화됨 ✓", true);
+  }catch(e){
+    console.error(e);
+    setSync("동기화 실패", false);
+  }
+}
+
+/* 편집이 멈추고 8초 뒤에만 업로드 → Firestore 쓰기 최소화 */
+window.__app.onDirty = ()=>{
+  if(!currentUser) return;
+  setSync("변경됨", false);
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(()=>{ window.__app.commit(); pushToCloud(); }, 8000);
+};
+
+/* 탭을 닫거나 숨길 때 즉시 업로드 */
+window.addEventListener("beforeunload", ()=>{ if(currentUser){ window.__app.commit(); pushToCloud(); } });
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState==="hidden" && currentUser){ window.__app.commit(); pushToCloud(); }
+});
+/* 저장 버튼을 누르면 클라우드에도 즉시 반영 */
+document.getElementById("saveBtn").addEventListener("click", ()=>{ if(currentUser) pushToCloud(true); });
+
+onAuthStateChanged(auth, (user)=>{
+  currentUser = user;
+  renderAuth(user);
+  if(user){ pullFromCloud(user); }
+  else{ setSync(""); }
+});
+
+renderAuth(null);
+
 </script>
 </body>
 </html>
